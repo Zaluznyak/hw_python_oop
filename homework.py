@@ -2,6 +2,8 @@ import datetime as dt
 
 
 class Calculator:
+    TODAY = dt.date.today()
+
     def __init__(self, limit):
         self.records = []
         self.limit = limit
@@ -12,77 +14,72 @@ class Calculator:
 
     def get_today_stats(self):
         """Getting the rest of the limit."""
-        sum = 0
-        now = dt.datetime.now()
-        for record in self.records:
-            if record.date == now.date():
-                sum += record.amount
-        return sum
+        rest = sum([record.amount for record in self.records
+                   if record.date == self.TODAY])
+        return rest
 
     def get_week_stats(self):
         """Getting the sum of last week."""
-        sum = 0
-        now = dt.datetime.now()
-        week_ago = now - dt.timedelta(days=6)
-        print(week_ago)
-        for record in self.records:
-            date = record.date
-            if week_ago.date() <= date <= now.date():
-                sum += record.amount
-        return sum
+        week_ago = self.TODAY - dt.timedelta(days=6)
+        sum_week = sum([record.amount for record in self.records
+                       if week_ago <= record.date <= self.TODAY])
+        return sum_week
+
+    def remains(self):
+        """Getting the remained of today."""
+        remain = self.limit - self.get_today_stats()
+        return remain
 
 
 class Record:
     def __init__(self, amount,
                  comment, date=None):
-        date_format = '%d.%m.%Y'
-        if date:
-            date_event = dt.datetime.strptime(date, date_format)
+        DATE_FORMAT = '%d.%m.%Y'
+        if date is None:
+            date_event = dt.date.today()
         else:
-            date_event = dt.datetime.now()
+            date_event = dt.datetime.strptime(date, DATE_FORMAT).date()
+
         self.amount = amount
         self.comment = comment
-        self.date = date_event.date()
+        self.date = date_event
 
 
 class CashCalculator(Calculator):
-    EURO_RATE = 90.82
-    USD_RATE = 76.77
+    EURO_RATE = 91.02
+    USD_RATE = 77.08
 
     def get_today_cash_remained(self, currency):
         """Write rest cash of today."""
-        balance = self.limit - self.get_today_stats()
-        if currency.lower() == 'rub':
-            translate_crnc = 'руб'
-        elif currency.lower() == 'usd':
-            balance /= self.USD_RATE
-            balance = round(balance, 2)
-            translate_crnc = 'USD'
-        elif currency.lower() == 'eur':
-            balance /= self.EURO_RATE
-            balance = round(balance, 2)
-            translate_crnc = 'Euro'
-        else:
-            return('Неизвестная валюта!')
+        conversion = {
+            'rub': [1, 'руб'],
+            'usd': [self.USD_RATE, 'USD'],
+            'eur': [self.EURO_RATE, 'Euro']
+            }
+        if self.remains() == 0:
+            return 'Денег нет, держись'
+        if currency.lower() not in conversion:
+            return 'Неизвестная валюта'
+        value = conversion[currency.lower()]
+        balance = round(self.remains() / value[0], 2)
+        translate_crnc = value[1]
         if balance > 0:
-            return(f'На сегодня осталось {balance} {translate_crnc}')
-        elif balance < 0:
+            return f'На сегодня осталось {balance} {translate_crnc}'
+        if balance < 0:
             balance = abs(balance)
-            return(f'Денег нет, держись: '
-                   f'твой долг - {balance} {translate_crnc}')
-        else:
-            return('Денег нет, держись')
+            return ('Денег нет, держись:'
+                    f' твой долг - {balance} {translate_crnc}')
 
 
 class CaloriesCalculator(Calculator):
     def get_calories_remained(self):
         """Write rest calories of today."""
-        remains = self.limit - self.get_today_stats()
-        if remains > 0:
-            return(f'Сегодня можно съесть что-нибудь ещё,'
-                   f' но с общей калорийностью не более {remains} кКал')
+        remain = self.remains()
+        if remain > 0:
+            return ('Сегодня можно съесть что-нибудь ещё,'
+                    f' но с общей калорийностью не более {remain} кКал')
         else:
-            return('Хватит есть!')
+            return 'Хватит есть!'
 
 
 if __name__ == 'main':
