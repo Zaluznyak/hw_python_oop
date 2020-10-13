@@ -2,7 +2,6 @@ import datetime as dt
 
 
 class Calculator:
-    TODAY = dt.date.today()
 
     def __init__(self, limit):
         self.records = []
@@ -14,15 +13,17 @@ class Calculator:
 
     def get_today_stats(self):
         """Getting the rest of the limit."""
+        now = dt.date.today()
         rest = sum([record.amount for record in self.records
-                   if record.date == self.TODAY])
+                   if record.date == now])
         return rest
 
     def get_week_stats(self):
         """Getting the sum of last week."""
-        week_ago = self.TODAY - dt.timedelta(days=6)
+        now = dt.date.today()
+        week_ago = now - dt.timedelta(days=6)
         sum_week = sum([record.amount for record in self.records
-                       if week_ago <= record.date <= self.TODAY])
+                       if week_ago <= record.date <= now])
         return sum_week
 
     def remains(self):
@@ -51,24 +52,24 @@ class CashCalculator(Calculator):
 
     def get_today_cash_remained(self, currency):
         """Write rest cash of today."""
+        remain = self.remains()
+        if remain == 0:
+            return 'Денег нет, держись'
         conversion = {
             'rub': [1, 'руб'],
             'usd': [self.USD_RATE, 'USD'],
             'eur': [self.EURO_RATE, 'Euro']
             }
-        if self.remains() == 0:
-            return 'Денег нет, держись'
         if currency.lower() not in conversion:
             return 'Неизвестная валюта'
         value = conversion[currency.lower()]
-        balance = round(self.remains() / value[0], 2)
+        balance = round(remain / value[0], 2)
         translate_crnc = value[1]
         if balance > 0:
             return f'На сегодня осталось {balance} {translate_crnc}'
-        if balance < 0:
-            balance = abs(balance)
-            return ('Денег нет, держись:'
-                    f' твой долг - {balance} {translate_crnc}')
+        balance = abs(balance)
+        return ('Денег нет, держись:'
+                f' твой долг - {balance} {translate_crnc}')
 
 
 class CaloriesCalculator(Calculator):
@@ -78,8 +79,7 @@ class CaloriesCalculator(Calculator):
         if remain > 0:
             return ('Сегодня можно съесть что-нибудь ещё,'
                     f' но с общей калорийностью не более {remain} кКал')
-        else:
-            return 'Хватит есть!'
+        return 'Хватит есть!'
 
 
 if __name__ == 'main':
