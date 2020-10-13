@@ -39,7 +39,6 @@ class Record:
             date_event = dt.date.today()
         else:
             date_event = dt.datetime.strptime(date, DATE_FORMAT).date()
-
         self.amount = amount
         self.comment = comment
         self.date = date_event
