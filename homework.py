@@ -2,7 +2,6 @@ import datetime as dt
 
 
 class Calculator:
-
     def __init__(self, limit):
         self.records = []
         self.limit = limit
